@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import path from 'path';
+import logger from '../shared/logger/LoggerManager';
 
 class ConfigManager {
   private config: any;
@@ -8,18 +9,16 @@ class ConfigManager {
     try {
       this.loadConfig();
     } catch (error) {
-      console.error('Error loading configuration:', error);
-      process.exit(1); // Exit process on critical error
+      logger.error('Error loading configuration:', error);
+      process.exit(1);
     }
   }
 
   private loadConfig(): void {
-    // Determine environment (default to 'development')
     const nodeEnv = process.env.NODE_ENV || 'development';
 
-    // Load environment-specific .env file
     const envFile = `.env.${nodeEnv}`;
-    const envFilePath = path.resolve(process.cwd(), envFile); // Adjusted path resolution
+    const envFilePath = path.resolve(process.cwd(), envFile);
 
     try {
       const result = dotenv.config({ path: envFilePath });
@@ -28,7 +27,6 @@ class ConfigManager {
         throw result.error;
       }
 
-      // Load appropriate configuration module based on environment
       let configModule;
 
       switch (nodeEnv) {
@@ -44,15 +42,17 @@ class ConfigManager {
           break;
       }
 
-      // Assign loaded configuration
       this.config = configModule;
-    } catch (error) {
-      console.error(`Error loading ${envFile}:`, error);
-      throw error; // Re-throw the error for handling in higher layers
+    } catch (error: any) {
+      logger.error(`Error loading ${envFile}:`, error);
+      throw error.message;
     }
   }
 
   get(key: string): any {
+    if (!this.config[key]) {
+      throw new Error(`No value exists for ${key} in ${process.env.NODE_ENV} config files`);
+    }
     return this.config[key];
   }
 }
