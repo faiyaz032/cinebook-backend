@@ -8,6 +8,7 @@ export default function authRoutes() {
 
   const controller = new AuthController();
 
+  router.post('/register', validateResource({ body: loginSchema }), controller.registerHandler);
   router.post('/login', validateResource({ body: loginSchema }), controller.loginHandler);
 
   return router;

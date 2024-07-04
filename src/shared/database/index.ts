@@ -1,27 +1,26 @@
 import { DataSource } from 'typeorm';
 import logger from '../logger/LoggerManager';
 
-class DatabaseManager {
-  async createConnection(host: string, port: number, username: string, password: string, database: string) {
-    try {
-      const postgresDataSource = new DataSource({
-        type: 'postgres',
-        host,
-        port,
-        username,
-        password,
-        database,
-        synchronize: true,
-      });
+const AppDataSource = new DataSource({
+  type: 'postgres',
+  host: 'localhost',
+  port: 5432,
+  username: 'postgres',
+  password: 'postgres',
+  database: 'cine_book',
+  entities: ['src/**/*.entity{.ts,.js}', 'dist/**/*.entity{.ts,.js}'],
+  synchronize: true,
+  logging: false,
+});
 
-      await postgresDataSource.initialize();
-
-      logger.info('Database connected successfully');
-    } catch (error: any) {
-      logger.error(error.message);
-      throw error;
-    }
+(async () => {
+  try {
+    await AppDataSource.initialize();
+    logger.info('Database connected successfully');
+  } catch (error: any) {
+    logger.error(error.message);
+    throw error;
   }
-}
+})();
 
-export default DatabaseManager;
+export default AppDataSource;

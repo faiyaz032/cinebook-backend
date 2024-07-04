@@ -1,7 +1,6 @@
 import { Application } from 'express';
 import { Server as HTTPServer } from 'http';
 import config from '../configs';
-import DatabaseManager from '../shared/database';
 import AppErrorHandler from '../shared/error-handling';
 import logger from '../shared/logger/LoggerManager';
 import AppFactory from './app'; // Assuming './app' exports an object with a method `createApp`
@@ -23,9 +22,6 @@ class Server {
   public async run(): Promise<ServerDto> {
     const expressApp = AppFactory.createApp();
     const server = await this.openConnection(expressApp);
-
-    const database = new DatabaseManager();
-    await database.createConnection('localhost', 5432, 'postgres', 'postgres', 'postgres');
 
     //this.database.connect();  // Assuming database has a connect() method
     return server;
