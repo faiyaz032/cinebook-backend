@@ -1,5 +1,6 @@
 import express, { Application, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
+import loadAuthModule from '../auth';
 import addRequestId from '../middlewares/addRequestId';
 import globalErrorHandler from '../middlewares/globalErrorHandler';
 import notFoundHandler from '../middlewares/notFoundHandler';
@@ -26,6 +27,7 @@ class AppFactory {
     });
 
     const router = express.Router();
+    loadAuthModule(router);
     loadAllModules(router);
     app.use('/api/v1', router);
 

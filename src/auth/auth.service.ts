@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import { StatusCodes } from 'http-status-codes';
-import CustomError from '../../shared/error-handling/CustomError';
-import logger from '../../shared/logger/LoggerManager';
+import CustomError from '../shared/error-handling/CustomError';
+import logger from '../shared/logger/LoggerManager';
 import { UserLoginDto } from './auth.schema';
 import { User } from './user.entity';
 import UserRepository from './user.repository';

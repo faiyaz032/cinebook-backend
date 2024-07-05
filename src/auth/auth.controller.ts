@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import logger from '../../shared/logger/LoggerManager';
-import sendResponse from '../../shared/utils/sendResponse';
-import signJwt from '../../shared/utils/signJwt';
+import logger from '../shared/logger/LoggerManager';
+import sendResponse from '../shared/utils/sendResponse';
+import signJwt from '../shared/utils/signJwt';
 import AuthService from './auth.service';
 
 class AuthController {

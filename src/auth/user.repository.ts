@@ -1,7 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
-import AppDataSource from '../../shared/database';
-import CustomError from '../../shared/error-handling/CustomError';
-import logger from '../../shared/logger/LoggerManager';
+import AppDataSource from '../shared/database';
+import CustomError from '../shared/error-handling/CustomError';
+import logger from '../shared/logger/LoggerManager';
 import { User } from './user.entity';
 
 class UserRepository {
