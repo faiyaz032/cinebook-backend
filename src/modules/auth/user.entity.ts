@@ -12,6 +12,9 @@ export class User {
   id: string;
 
   @Column()
+  name: string;
+
+  @Column()
   email: string;
 
   @Column()
@@ -28,9 +31,7 @@ export class User {
   @BeforeUpdate()
   async hashPassword() {
     if (this.password) {
-      console.log('Hashing password:', this.password); // Logging
       this.password = await bcrypt.hash(this.password, 10);
-      console.log('Hashed password:', this.password); // Logging
     }
   }
 }
