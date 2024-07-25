@@ -12,7 +12,10 @@ export const movieSchema = z.object({
 
 export const updateMovieSchema = movieSchema.partial();
 
-export const idSchema = z.string().uuid({ message: 'Invalid UUID format for id' });
+// Wrap the objectId schema in an object
+export const idSchema = z.object({
+  id: z.string().uuid({ message: 'id must be a valid uuid' }),
+});
 
 export const querySchema = z.object({
   search: z.string().optional(),
@@ -30,6 +33,7 @@ export const querySchema = z.object({
   filters: z.any().optional(),
 });
 
+export type UidDto = z.infer<typeof idSchema>['id'];
 export type QueryParamsDto = z.infer<typeof querySchema>;
 export type MovieDto = z.infer<typeof movieSchema>;
 export type UpdateMovieDto = z.infer<typeof updateMovieSchema>;

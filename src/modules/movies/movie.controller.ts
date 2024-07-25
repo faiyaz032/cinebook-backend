@@ -40,6 +40,17 @@ class MovieController {
       next(error);
     }
   };
+
+  getMovieByIdHandler = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await this.service.getMovieById(req.params.id);
+      console.log('🚀 ~ MovieController ~ getMovieByIdHandler= ~ result:', result);
+
+      sendResponse(res, StatusCodes.OK, 'Movie by id fetched successfully', result);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export default MovieController;

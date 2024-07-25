@@ -4,7 +4,7 @@ import CustomError from '../../shared/error-handling/CustomError';
 import logger from '../../shared/logger/LoggerManager';
 import getPaginationData from '../../shared/utils/getPaginationData';
 import { Movie } from './movie.entity';
-import { UpdateMovieDto } from './movie.schema';
+import { UidDto, UpdateMovieDto } from './movie.schema';
 import { Options } from './movie.types';
 
 class MovieRepository {
@@ -78,7 +78,7 @@ class MovieRepository {
     }
   };
 
-  getMovieById = async (id: string) => {
+  getMovieById = async (id: UidDto) => {
     try {
       return this.repository.findOne({ where: { id } });
     } catch (error: any) {
