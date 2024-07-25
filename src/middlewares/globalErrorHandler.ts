@@ -5,7 +5,10 @@ import AppErrorHandler from '../shared/error-handling';
 interface ResponseData {
   success: boolean;
   statusCode: number;
-  message: string;
+  errors: {
+    message: string;
+    details?: Array<{ field: string; message: string; location: string }>;
+  };
   operational?: boolean;
   requestId?: string;
   stack?: string;
@@ -25,7 +28,7 @@ export default function globalErrorHandler(expressApp: Application) {
     const responseData: ResponseData = {
       success: error.success || false,
       statusCode: error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR,
-      message: error.message,
+      errors: error.errors || { message: 'An unexpected error occurred' }, // Use the new structure
       operational: error.operational,
       requestId: res.get('X-Request-Id'),
     };
@@ -36,6 +39,6 @@ export default function globalErrorHandler(expressApp: Application) {
       responseData.stack = error.stack;
     }
 
-    res.status(error?.statusCode || 500).json(responseData);
+    res.status(error?.statusCode || StatusCodes.INTERNAL_SERVER_ERROR).json(responseData);
   });
 }
