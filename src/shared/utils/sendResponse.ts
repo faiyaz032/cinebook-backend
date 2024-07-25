@@ -5,7 +5,7 @@ const sendResponse = (
   statusCode: number,
   message: string,
   data?: any,
-  links?: any,
+
   pagination?: any
 ): void => {
   // Uncomment if logger is imported or defined
@@ -26,9 +26,7 @@ const sendResponse = (
   if (data !== undefined) {
     responseObject.data = data;
   }
-  if (links !== undefined) {
-    responseObject.links = links;
-  }
+
   if (pagination !== undefined) {
     responseObject.pagination = pagination;
   }

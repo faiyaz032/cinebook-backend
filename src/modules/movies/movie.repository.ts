@@ -2,8 +2,10 @@ import { StatusCodes } from 'http-status-codes';
 import AppDataSource from '../../shared/database';
 import CustomError from '../../shared/error-handling/CustomError';
 import logger from '../../shared/logger/LoggerManager';
+import getPaginationData from '../../shared/utils/getPaginationData';
 import { Movie } from './movie.entity';
 import { UpdateMovieDto } from './movie.schema';
+import { Options } from './movie.types';
 
 class MovieRepository {
   private repository;
@@ -21,14 +23,58 @@ class MovieRepository {
       throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error while creating movie');
     }
   };
+  //?search=action&filters[duration]=2h&filters[nowShowing]=true&sort=name:asc&page=2&limit=10
+  getAllMovies = async (options: Options) => {
+    const movieRepository = AppDataSource.getRepository(Movie);
 
-  getAllMovies = async () => {
+    // Destructure options with default values
+    const { search, filters, sort, page = 1, limit = 10 } = options;
+
+    // Create the query builder
+    let query = movieRepository.createQueryBuilder('movie');
+
+    // Handle search
+    if (search) {
+      query = query.where('movie.name LIKE :search OR movie.description LIKE :search', { search: `%${search}%` });
+    }
+
+    // Handle filters
+    if (filters) {
+      Object.keys(filters).forEach((key) => {
+        const value = filters[key];
+        if (value === 'true' || value === 'false') {
+          query = query.andWhere(`movie.${key} = :${key}`, { [key]: value === 'true' });
+        } else if (!isNaN(value)) {
+          query = query.andWhere(`movie.${key} = :${key}`, { [key]: parseFloat(value) });
+        } else {
+          query = query.andWhere(`movie.${key} LIKE :${key}`, { [key]: `%${value}%` });
+        }
+      });
+    }
+
+    // Handle sorting
+    if (sort) {
+      const [sortField, sortOrder] = sort.split(':');
+      query = query.orderBy(`movie.${sortField}`, sortOrder.toUpperCase() as 'ASC' | 'DESC');
+    }
+
+    // Handle pagination
+    const take = limit;
+    const skip = (page - 1) * take;
+    query = query.take(take).skip(skip);
+
+    // Execute the query
     try {
-      const movies = await this.repository.find();
-      return movies;
+      const [movies, totalItems] = await query.getManyAndCount();
+
+      const pagination = getPaginationData(page, totalItems, take);
+
+      return {
+        data: movies,
+        pagination,
+      };
     } catch (error: any) {
-      logger.error(error.message);
-      throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error while getting all movies');
+      throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, `Error retrieving movies: ${error.message}`);
     }
   };
 
