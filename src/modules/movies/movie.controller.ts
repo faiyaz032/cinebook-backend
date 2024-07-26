@@ -44,9 +44,32 @@ class MovieController {
   getMovieByIdHandler = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const result = await this.service.getMovieById(req.params.id);
-      console.log('🚀 ~ MovieController ~ getMovieByIdHandler= ~ result:', result);
 
       sendResponse(res, StatusCodes.OK, 'Movie by id fetched successfully', result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  updateMovieHandler = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+
+      const result = await this.service.updateMovie(id, req.body);
+
+      sendResponse(res, StatusCodes.OK, 'Movie updated successfully', result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  deleteMovieHandler = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+
+      await this.service.deleteMovie(id);
+
+      sendResponse(res, StatusCodes.OK, 'Movie deleted successfully');
     } catch (error) {
       next(error);
     }

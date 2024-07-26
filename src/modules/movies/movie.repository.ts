@@ -9,15 +9,17 @@ import { Options } from './movie.types';
 
 class MovieRepository {
   private repository;
+  private entity;
 
   constructor() {
     this.repository = AppDataSource.getRepository(Movie);
+    this.entity = Movie;
   }
 
   createMovie = async (data: Movie) => {
     try {
-      const entity = Object.assign(new Movie(), data);
-      return this.repository.save(entity);
+      const payload = Object.assign(new this.entity(), data);
+      return this.repository.save(payload);
     } catch (error: any) {
       logger.error(error.message);
       throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error while creating movie');
@@ -25,13 +27,11 @@ class MovieRepository {
   };
   //?search=action&filters[duration]=2h&filters[nowShowing]=true&sort=name:asc&page=2&limit=10
   getAllMovies = async (options: Options) => {
-    const movieRepository = AppDataSource.getRepository(Movie);
-
     // Destructure options with default values
     const { search, filters, sort, page = 1, limit = 10 } = options;
 
     // Create the query builder
-    let query = movieRepository.createQueryBuilder('movie');
+    let query = this.repository.createQueryBuilder('movie');
 
     // Handle search
     if (search) {
@@ -87,9 +87,17 @@ class MovieRepository {
     }
   };
 
-  updateMovie = async (id: string, data: UpdateMovieDto) => {
+  updateMovie = async (id: string, payload: UpdateMovieDto) => {
     try {
-      return this.repository.update({ id }, data);
+      const updatedRow = await this.repository
+        .createQueryBuilder()
+        .update(this.entity, payload)
+        .where('id = :id', { id: id })
+        .returning('*')
+        .updateEntity(true)
+        .execute();
+
+      return updatedRow.raw[0];
     } catch (error: any) {
       logger.error(error.message);
       throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error while updating movie');
