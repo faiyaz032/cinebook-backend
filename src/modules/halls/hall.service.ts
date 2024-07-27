@@ -5,16 +5,21 @@ import { Hall } from './hall.entity';
 import HallRepository from './hall.repository';
 import { HallIdDto, UpdateHallDto } from './hall.schema';
 import { Options } from './hall.types';
+import SeatService from './seat.service';
 
 class HallService {
   private repository;
+  private seatService;
+
   constructor() {
     this.repository = new HallRepository();
+    this.seatService = new SeatService();
   }
 
   createHall = async (payload: Hall) => {
     try {
       const data = await this.repository.createHall(payload);
+      await this.seatService.createSeats(data);
       return data;
     } catch (error: any) {
       logger.error(error.message);
