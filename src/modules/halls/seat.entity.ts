@@ -28,7 +28,7 @@ export class Seat {
   })
   seat_type: string;
 
-  @Column()
+  @Column('decimal', { precision: 10, scale: 2 })
   price: number;
 
   @Column({

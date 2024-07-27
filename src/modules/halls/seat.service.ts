@@ -1,8 +1,11 @@
+import { StatusCodes } from 'http-status-codes';
+import CustomError from '../../shared/error-handling/CustomError';
 import logger from '../../shared/logger/LoggerManager';
 import { Hall } from './hall.entity';
-import { SeatTypes } from './seat.entity';
+import { HallIdDto } from './hall.schema';
+import { Seat, SeatTypes } from './seat.entity';
 import SeatRepository from './seat.repository';
-import { ISeat } from './seat.types';
+import { SeatIdDto } from './seat.schema';
 
 class SeatService {
   private repository;
@@ -19,10 +22,12 @@ class SeatService {
    * @param capacity - The total number of seats to be generated.
    * @returns An array of seat objects, each with a hall ID, seat number, type, and price.
    */
-  private generateSeats(hallId: string, capacity: number): Partial<ISeat>[] {
-    const seats: Partial<ISeat>[] = [];
-    const seatsPerRow = 10; // Number of seats per row
-    const rows = Math.ceil(capacity / seatsPerRow); // Calculate the total number of rows required
+  private generateSeats(hall: Hall, capacity: number): Partial<Seat>[] {
+    const SEATS_PER_ROW = 30; // Number of seats per row
+
+    const seats: Partial<Seat>[] = [];
+
+    const rows = Math.ceil(capacity / SEATS_PER_ROW); // Calculate the total number of rows required
 
     /**
      * Generates a row identifier based on the given index.
@@ -44,9 +49,9 @@ class SeatService {
     for (let row = 0; row < rows; row++) {
       const rowLetter = getRowIdentifier(row); // Get row identifier for the current row
       // Loop through each column to create seats in the current row
-      for (let col = 0; col < seatsPerRow && seats.length < capacity; col++) {
-        const seat: Partial<ISeat> = {
-          hall: hallId, // Assign the hall ID to the seat
+      for (let col = 0; col < SEATS_PER_ROW && seats.length < capacity; col++) {
+        const seat: Partial<Seat> = {
+          hall: hall, // hall
           seat_number: `${rowLetter}${col + 1}`, // Generate seat number (e.g., A1, A2, ..., B1, B2, etc.)
           seat_type: rowLetter >= 'A' && rowLetter <= 'H' ? SeatTypes.REGULAR : SeatTypes.PREMIUM, // Determine seat type based on row
           price: rowLetter >= 'A' && rowLetter <= 'H' ? 5 : 8, // Determine price based on seat type
@@ -60,11 +65,33 @@ class SeatService {
 
   createSeats = async (hall: Hall) => {
     try {
-      const seats = this.generateSeats(hall.id, hall.capacity);
+      const seats = this.generateSeats(hall, hall.capacity);
       return await this.repository.createSeats(seats);
     } catch (error: any) {
       logger.error(error.message);
       throw new Error('Error while creating seats');
+    }
+  };
+
+  getSeatsByHallId = async (hallId: HallIdDto) => {
+    try {
+      return await this.repository.getSeatsByHallId(hallId);
+    } catch (error: any) {
+      logger.error(error.message);
+      throw error;
+    }
+  };
+
+  updateSeat = async (id: SeatIdDto, updatedPayload: Partial<Seat>) => {
+    try {
+      const data = await this.repository.updateSeat(id, updatedPayload);
+      if (!data) {
+        throw new CustomError(StatusCodes.NOT_FOUND, 'No seat found with the given id');
+      }
+      return data;
+    } catch (error: any) {
+      logger.error(error.message);
+      throw error;
     }
   };
 }

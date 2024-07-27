@@ -2,23 +2,47 @@ import { StatusCodes } from 'http-status-codes';
 import AppDataSource from '../../shared/database';
 import CustomError from '../../shared/error-handling/CustomError';
 import logger from '../../shared/logger/LoggerManager';
+import { HallIdDto } from './hall.schema';
 import { Seat } from './seat.entity';
-import { ISeat } from './seat.types';
+import { SeatIdDto } from './seat.schema';
 
 class SeatRepository {
   private repository;
+  private entity;
 
   constructor() {
-    this.repository = AppDataSource.getRepository(Seat);
+    this.entity = Seat;
+    this.repository = AppDataSource.getRepository(this.entity);
   }
 
-  createSeats = async (seatsPayload: Partial<ISeat>[]) => {
+  createSeats = async (seatsPayload: Partial<Seat>[]) => {
     try {
-      const seats = seatsPayload.map((payload) => Object.assign(new Seat(), payload));
+      const seats = seatsPayload.map((payload) => Object.assign(new this.entity(), payload));
       return await this.repository.save(seats);
     } catch (error: any) {
       logger.error(error.message);
       throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error while creating seats');
+    }
+  };
+
+  getSeatsByHallId = async (hallId: HallIdDto) => {
+    return await this.repository.find({ where: { hall: { id: hallId } } });
+  };
+
+  updateSeat = async (id: SeatIdDto, updatedPayload: Partial<Seat>) => {
+    try {
+      const updatedRow = await this.repository
+        .createQueryBuilder()
+        .update(this.entity, updatedPayload)
+        .where('id = :id', { id: id })
+        .returning('*')
+        .updateEntity(true)
+        .execute();
+
+      return updatedRow.raw[0];
+    } catch (error: any) {
+      logger.error(error.message);
+      throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error while updating seat');
     }
   };
 }
