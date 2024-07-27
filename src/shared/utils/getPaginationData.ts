@@ -1,4 +1,13 @@
-import { PaginationData } from '../../modules/movies/movie.types';
+export type PaginationData = {
+  currentPage: number;
+  totalItems: number;
+  itemsPerPage: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  nextPage: number | null;
+  previousPage: number | null;
+};
 
 export default function getPaginationData(page: number, totalItems: number, itemsPerPage: number): PaginationData {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
