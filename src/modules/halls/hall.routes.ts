@@ -2,6 +2,7 @@ import { Router } from 'express';
 import validateResource from '../../middlewares/validateResource';
 import HallController from './hall.controller';
 import { hallIdSchema, hallQuerySchema, hallSchema, updateHallSchema } from './hall.schema';
+import { seatIdSchema, updateSeatSchema } from './seat.schema';
 
 export default function hallRoutes() {
   const router = Router();
@@ -17,6 +18,14 @@ export default function hallRoutes() {
     controller.updateHallHandler
   );
   router.delete('/:id', validateResource({ params: hallIdSchema }), controller.deleteHallHandler);
+
+  //seats routers
+  router.get('/:id/seats', validateResource({ params: hallIdSchema }), controller.getSeatsByHallIdHandler);
+  router.patch(
+    '/seats/:seatId',
+    validateResource({ params: seatIdSchema, body: updateSeatSchema }),
+    controller.updateSeatHandler
+  );
 
   return router;
 }

@@ -3,11 +3,15 @@ import { StatusCodes } from 'http-status-codes';
 import qs from 'qs';
 import sendResponse from '../../shared/utils/sendResponse';
 import HallService from './hall.service';
+import SeatService from './seat.service';
 
 class HallController {
   private service;
+  private seatService;
+
   constructor() {
     this.service = new HallService();
+    this.seatService = new SeatService();
   }
 
   createHallHandler = async (req: Request, res: Response, next: NextFunction) => {
@@ -71,6 +75,26 @@ class HallController {
 
       sendResponse(res, StatusCodes.OK, 'Hall deleted successfully');
     } catch (error) {
+      next(error);
+    }
+  };
+
+  getSeatsByHallIdHandler = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const result = await this.seatService.getSeatsByHallId(id);
+      sendResponse(res, StatusCodes.OK, 'All seats fetched successfully', result);
+    } catch (error: any) {
+      next(error);
+    }
+  };
+
+  updateSeatHandler = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { seatId } = req.params;
+      const result = await this.seatService.updateSeat(seatId, req.body);
+      sendResponse(res, StatusCodes.OK, 'Seat updated successfully', result);
+    } catch (error: any) {
       next(error);
     }
   };

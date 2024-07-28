@@ -26,7 +26,14 @@ class SeatRepository {
   };
 
   getSeatsByHallId = async (hallId: HallIdDto) => {
-    return await this.repository.find({ where: { hall: { id: hallId } } });
+    return await this.repository
+      .createQueryBuilder('seat')
+      .select(['seat.id', 'seat.seat_type', 'seat.seat_number', 'seat.status', 'seat.price'])
+      .where('seat.hallId = :hallId', { hallId })
+      .orderBy("LENGTH(regexp_replace(seat.seat_number, '\\d', '', 'g'))") // Sort by the length of the alphabetical part
+      .addOrderBy("regexp_replace(seat.seat_number, '\\d', '', 'g')") // Sort by the alphabetical part
+      .addOrderBy("CAST(regexp_replace(seat.seat_number, '\\D', '', 'g') AS INTEGER)") // Sort by the numeric part
+      .getMany();
   };
 
   updateSeat = async (id: SeatIdDto, updatedPayload: Partial<Seat>) => {
