@@ -3,39 +3,46 @@ import AppDataSource from '../../shared/database';
 import CustomError from '../../shared/error-handling/CustomError';
 import logger from '../../shared/logger/LoggerManager';
 import getPaginationData from '../../shared/utils/getPaginationData';
-import { Hall } from './hall.entity';
-import { HallIdDto, UpdateHallDto } from './hall.schema';
-import { Options } from './hall.types';
+import { Show } from './show.entity';
+import { IdDto } from './show.schema';
 
-class HallRepository {
+export type Options = {
+  search?: string;
+  filters?: Record<string, any>;
+  sort?: string;
+  page?: number;
+  limit?: number;
+};
+
+class ShowRepository {
   private repository;
   private entity;
 
   constructor() {
-    this.repository = AppDataSource.getRepository(Hall);
-    this.entity = Hall;
+    this.entity = Show;
+    this.repository = AppDataSource.getRepository(this.entity);
   }
 
-  createHall = async (data: Hall) => {
+  createShow = async (data: Show) => {
     try {
       const payload = Object.assign(new this.entity(), data);
       return this.repository.save(payload);
     } catch (error: any) {
       logger.error(error.message);
-      throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error while creating hall');
+      throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error while creating show');
     }
   };
   //?search=action&filters[duration]=2h&filters[nowShowing]=true&sort=name:asc&page=2&limit=10
-  getAllHalls = async (options: Options) => {
+  getAllShows = async (options: Options) => {
     // Destructure options with default values
     const { search, filters, sort, page = 1, limit = 10 } = options;
 
     // Create the query builder
-    let query = this.repository.createQueryBuilder('hall');
+    let query = this.repository.createQueryBuilder('show');
 
     // Handle search
     if (search) {
-      query = query.where('hall.capacity LIKE :search', { search: `%${search}%` });
+      query = query.where('show.id LIKE :search', { search: `%${search}%` });
     }
 
     // Handle filters
@@ -43,11 +50,11 @@ class HallRepository {
       Object.keys(filters).forEach((key) => {
         const value = filters[key];
         if (value === 'true' || value === 'false') {
-          query = query.andWhere(`hall.${key} = :${key}`, { [key]: value === 'true' });
+          query = query.andWhere(`show.${key} = :${key}`, { [key]: value === 'true' });
         } else if (!isNaN(value)) {
-          query = query.andWhere(`hall.${key} = :${key}`, { [key]: parseFloat(value) });
+          query = query.andWhere(`show.${key} = :${key}`, { [key]: parseFloat(value) });
         } else {
-          query = query.andWhere(`hall.${key} LIKE :${key}`, { [key]: `%${value}%` });
+          query = query.andWhere(`show.${key} LIKE :${key}`, { [key]: `%${value}%` });
         }
       });
     }
@@ -55,7 +62,7 @@ class HallRepository {
     // Handle sorting
     if (sort) {
       const [sortField, sortOrder] = sort.split(':');
-      query = query.orderBy(`hall.${sortField}`, sortOrder.toUpperCase() as 'ASC' | 'DESC');
+      query = query.orderBy(`show.${sortField}`, sortOrder.toUpperCase() as 'ASC' | 'DESC');
     }
 
     // Handle pagination
@@ -65,29 +72,29 @@ class HallRepository {
 
     // Execute the query
     try {
-      const [halls, totalItems] = await query.getManyAndCount();
+      const [shows, totalItems] = await query.getManyAndCount();
 
       const pagination = getPaginationData(page, totalItems, take);
 
       return {
-        data: halls,
+        data: shows,
         pagination,
       };
     } catch (error: any) {
-      throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, `Error retrieving halls: ${error.message}`);
+      throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, `Error retrieving shows: ${error.message}`);
     }
   };
 
-  getHallById = async (id: HallIdDto) => {
+  getShowById = async (id: IdDto) => {
     try {
       return this.repository.findOne({ where: { id } });
     } catch (error: any) {
       logger.error(error.message);
-      throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error while getting hall by id');
+      throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error while getting show by id');
     }
   };
 
-  updateHall = async (id: HallIdDto, payload: UpdateHallDto) => {
+  updateShow = async (id: IdDto, payload: Partial<Show>) => {
     try {
       const updatedRow = await this.repository
         .createQueryBuilder()
@@ -100,18 +107,18 @@ class HallRepository {
       return updatedRow.raw[0];
     } catch (error: any) {
       logger.error(error.message);
-      throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error while updating hall');
+      throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error while updating show');
     }
   };
 
-  deleteHall = async (id: HallIdDto) => {
+  deleteShow = async (id: IdDto) => {
     try {
       return this.repository.delete({ id });
     } catch (error: any) {
       logger.error(error.message);
-      throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error while deleting hall');
+      throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error while deleting show');
     }
   };
 }
 
-export default HallRepository;
+export default ShowRepository;
