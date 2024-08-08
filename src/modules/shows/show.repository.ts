@@ -1,18 +1,12 @@
 import { StatusCodes } from 'http-status-codes';
+import { Raw } from 'typeorm';
 import AppDataSource from '../../shared/database';
 import CustomError from '../../shared/error-handling/CustomError';
 import logger from '../../shared/logger/LoggerManager';
 import getPaginationData from '../../shared/utils/getPaginationData';
 import { Show } from './show.entity';
 import { IdDto } from './show.schema';
-
-export type Options = {
-  search?: string;
-  filters?: Record<string, any>;
-  sort?: string;
-  page?: number;
-  limit?: number;
-};
+import { Options } from './show.types';
 
 class ShowRepository {
   private repository;
@@ -34,45 +28,64 @@ class ShowRepository {
   };
   //?search=action&filters[duration]=2h&filters[nowShowing]=true&sort=name:asc&page=2&limit=10
   getAllShows = async (options: Options) => {
-    // Destructure options with default values
     const { search, filters, sort, page = 1, limit = 10 } = options;
 
-    // Create the query builder
-    let query = this.repository.createQueryBuilder('show');
+    // Prepare the where clause
+    let where: any = {};
 
-    // Handle search
+    // Handle movie name search/filter with case insensitivity
     if (search) {
-      query = query.where('show.id LIKE :search', { search: `%${search}%` });
+      where = {
+        ...where,
+        movie: {
+          name: Raw((alias) => `LOWER(${alias}) ILIKE LOWER(:search)`, { search: `%${search}%` }),
+        },
+      };
     }
 
-    // Handle filters
+    // Handle other filters
     if (filters) {
       Object.keys(filters).forEach((key) => {
         const value = filters[key];
         if (value === 'true' || value === 'false') {
-          query = query.andWhere(`show.${key} = :${key}`, { [key]: value === 'true' });
+          where = {
+            ...where,
+            [key]: value === 'true',
+          };
         } else if (!isNaN(value)) {
-          query = query.andWhere(`show.${key} = :${key}`, { [key]: parseFloat(value) });
+          where = {
+            ...where,
+            [key]: parseFloat(value),
+          };
         } else {
-          query = query.andWhere(`show.${key} LIKE :${key}`, { [key]: `%${value}%` });
+          where = {
+            ...where,
+            [key]: Raw((alias) => `LOWER(${alias}) ILIKE LOWER(:${key})`, { [key]: `%${value}%` }),
+          };
         }
       });
     }
 
     // Handle sorting
+    let order: any = {};
     if (sort) {
       const [sortField, sortOrder] = sort.split(':');
-      query = query.orderBy(`show.${sortField}`, sortOrder.toUpperCase() as 'ASC' | 'DESC');
+      order[sortField] = sortOrder.toUpperCase() as 'ASC' | 'DESC';
     }
 
     // Handle pagination
     const take = limit;
     const skip = (page - 1) * take;
-    query = query.take(take).skip(skip);
 
-    // Execute the query
+    // Execute the query with relations
     try {
-      const [shows, totalItems] = await query.getManyAndCount();
+      const [shows, totalItems] = await this.repository.findAndCount({
+        where,
+        relations: ['hall', 'movie'],
+        order,
+        take,
+        skip,
+      });
 
       const pagination = getPaginationData(page, totalItems, take);
 
@@ -87,7 +100,7 @@ class ShowRepository {
 
   getShowById = async (id: IdDto) => {
     try {
-      return this.repository.findOne({ where: { id } });
+      return this.repository.findOne({ where: { id }, relations: ['hall', 'movie'] });
     } catch (error: any) {
       logger.error(error.message);
       throw new CustomError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error while getting show by id');

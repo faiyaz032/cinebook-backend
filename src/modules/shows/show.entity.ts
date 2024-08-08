@@ -3,23 +3,25 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
-  OneToOne,
+  ManyToOne,
   PrimaryGeneratedColumn,
+  Unique,
   UpdateDateColumn,
 } from 'typeorm';
 import { Hall } from '../halls/hall.entity';
 import { Movie } from '../movies/movie.entity';
 
 @Entity()
+@Unique(['movie', 'hall', 'start_time'])
 export class Show {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @OneToOne(() => Movie, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Movie, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'movie_id' })
   movie: Movie;
 
-  @OneToOne(() => Hall, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Hall, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'hall_id' })
   hall: Hall;
 
